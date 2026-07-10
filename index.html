@@ -840,105 +840,52 @@ html { scroll-behavior: smooth; }
 		});
 	}
 </script>
-<style>
-	.addr-modal{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:99999;padding:20px}
-	.addr-modal.open{display:flex}
-	.addr-box{background:linear-gradient(180deg,#0d0907,#060403);border:1px solid rgba(245,166,35,0.35);border-radius:18px;padding:26px 22px;max-width:430px;width:100%;box-shadow:0 30px 80px -20px rgba(0,0,0,.8);position:relative;max-height:90vh;overflow-y:auto}
-	.addr-close{position:absolute;top:12px;right:14px;background:transparent;border:0;color:#8a827a;font-size:28px;line-height:1;cursor:pointer}
-	.addr-step{font-size:11px;color:#f5a623;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
-	.addr-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f5c875;margin-bottom:6px;letter-spacing:.04em;line-height:1.05}
-	.addr-sub{font-size:13px;color:#8a827a;margin-bottom:18px;line-height:1.5}
-	.addr-box label{display:block;font-size:12px;color:#e8e4dc;font-weight:600;margin-bottom:12px}
-	.addr-box input,.addr-box select{display:block;width:100%;margin-top:6px;padding:11px 12px;background:#0a0604;border:1px solid #2a1f16;border-radius:10px;color:#fff;font-size:14px;font-family:inherit;box-sizing:border-box}
-	.addr-box input:focus,.addr-box select:focus{outline:none;border-color:#f5a623}
-	.addr-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0a0604;border:1px solid #2a1f16;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#e8e4dc}
-	.addr-summary strong{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c875}
-	.addr-submit{width:100%;margin-top:8px;padding:14px;border:0;border-radius:10px;background:linear-gradient(180deg,#f5c875,#c98f2a);color:#1a0a00;font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
-	.addr-submit:hover{transform:translateY(-1px)}
-	.addr-secure{text-align:center;font-size:11px;color:#8a827a;margin-top:12px}
-</style>
-<div id="addr-modal" class="addr-modal" role="dialog" aria-modal="true" aria-hidden="true">
-	<div class="addr-box">
-		<button class="addr-close" type="button" aria-label="Funga">&times;</button>
-		<div class="addr-step">Hatua 1 ya 2 · Anwani ya kutumiwa</div>
-		<h2 class="addr-title">Weka mahali pa kukutumia</h2>
-		<p class="addr-sub">Jaza taarifa zako ili tuandae kifurushi chako. Bidhaa hutumwa mara tu baada ya malipo kuthibitishwa.</p>
-		<div class="addr-summary"><span id="addr-pkg">Durax Man</span><strong id="addr-price">&nbsp;</strong></div>
-		<form id="addr-form">
-			<label>Jina kamili<input type="text" name="jina" autocomplete="name" required></label>
-			<label>Namba ya simu<input type="tel" name="simu" autocomplete="tel" inputmode="tel" required></label>
-			<label>Kaunti / Mji<input type="text" name="kaunti" required></label>
-			<label>Anwani kamili (mtaa, nyumba, alama)<input type="text" name="anwani" autocomplete="street-address" required></label>
-			<button type="submit" class="addr-submit">ENDELEA NA MALIPO &rarr;</button>
-			<div class="addr-secure">&#128274; Taarifa zako ni salama &middot; Hatua inayofuata ni malipo</div>
-		</form>
-	</div>
-</div>
 <script>
 	(function () {
-		var modal = document.getElementById('addr-modal');
-		var form = document.getElementById('addr-form');
-		var pkgEl = document.getElementById('addr-pkg');
-		var priceEl = document.getElementById('addr-price');
-		var checkoutUrl = '';
-		var orderPkg = 'Durax Man';
-		var orderValue = 0;
-
-		function openModal(btn) {
-			checkoutUrl = btn.getAttribute('href') || '';
-			var card = btn.closest('.offer-card');
-			if (card) {
-				var title = card.querySelector('.offer-title');
-				var price = card.querySelector('.offer-price');
-				orderPkg = title ? title.textContent.trim() : 'Durax Man';
-				pkgEl.textContent = orderPkg;
-				var priceText = '';
-				if (price) {
-					var clone = price.cloneNode(true);
-					var struck = clone.querySelector('span');
-					if (struck) { struck.parentNode.removeChild(struck); }
-					priceText = clone.textContent.trim();
-				}
-				priceEl.textContent = priceText;
-				orderValue = parseInt(priceText.replace(/[^0-9]/g, ''), 10) || 0;
-			}
-			if (typeof fbq === 'function') {
-				fbq('track', 'AddToCart', { content_name: orderPkg, value: orderValue, currency: 'KES' });
-			}
-			modal.classList.add('open');
-			modal.setAttribute('aria-hidden', 'false');
-			document.body.style.overflow = 'hidden';
-			var first = form.querySelector('input');
-			if (first) { setTimeout(function () { first.focus(); }, 50); }
-		}
-
-		function closeModal() {
-			modal.classList.remove('open');
-			modal.setAttribute('aria-hidden', 'true');
-			document.body.style.overflow = '';
-		}
-
+		// Bofya kununua -> nenda moja kwa moja kwenye malipo (SmooPay tayari huchukua anwani).
 		document.querySelectorAll('.offer-cta').forEach(function (btn) {
-			btn.addEventListener('click', function (e) {
-				e.preventDefault();
-				openModal(btn);
+			btn.addEventListener('click', function () {
+				if (typeof fbq !== 'function') return;
+				var card = btn.closest('.offer-card');
+				var name = 'Durax Man', value = 0;
+				if (card) {
+					var t = card.querySelector('.offer-title');
+					if (t) { name = t.textContent.trim(); }
+					var p = card.querySelector('.offer-price');
+					if (p) {
+						var clone = p.cloneNode(true);
+						var s = clone.querySelector('span');
+						if (s) { s.parentNode.removeChild(s); }
+						value = parseInt(clone.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+					}
+				}
+				fbq('track', 'AddToCart', { content_name: name, value: value, currency: 'KES' });
+				fbq('track', 'InitiateCheckout', { content_name: name, value: value, currency: 'KES' });
 			});
 		});
+	})();
+</script>
+<script>
+	(function () {
+		var items = document.querySelectorAll('.faq-item');
+		Array.prototype.forEach.call(items, function (item) {
+			var btn = item.querySelector('.faq-q');
+			var wrap = item.querySelector('.faq-a-wrap');
+			var toggle = item.querySelector('.faq-toggle');
+			if (!btn || !wrap) return;
 
-		modal.querySelector('.addr-close').addEventListener('click', closeModal);
-		modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-		document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
-
-		form.addEventListener('submit', function (e) {
-			e.preventDefault();
-			if (!checkoutUrl) return;
-			if (typeof fbq === 'function') {
-				fbq('track', 'InitiateCheckout', { content_name: orderPkg, value: orderValue, currency: 'KES' });
+			function setOpen(open) {
+				item.classList.toggle('open', open);
+				btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+				if (toggle) { toggle.textContent = open ? '−' : '+'; }
+				wrap.style.maxHeight = open ? (wrap.scrollHeight + 'px') : '0px';
 			}
-			var params = new URLSearchParams();
-			new FormData(form).forEach(function (v, k) { params.append(k, v); });
-			var url = checkoutUrl + (checkoutUrl.indexOf('?') > -1 ? '&' : '?') + params.toString();
-			window.location.href = url;
+
+			setOpen(item.classList.contains('open'));
+
+			btn.addEventListener('click', function () {
+				setOpen(!item.classList.contains('open'));
+			});
 		});
 	})();
 </script>
